@@ -33,6 +33,19 @@ for (i in 1:length(vars)) {
 }
 dev.off()
 
+
+#####Analysis ####
+sum(complete.cases(train[c(8:159)]))   #There are no complete cases, so we can't just work with full data
+sapply(train[c(8:159)])
+
+#I will have to drop variables or impute
+
+#I think I have to scale the data first - then do the analysis
+#it also seems the missing data is a problem, so I would likely have to impute it
+
+#try SVD to reduce the variables
+svd1 <- svd(scale(train[,c(8:159)]))
+
 #It does not seem to me I will be able to identify them by sight, but clearly the arm measures are the most 
 #discrinant by sight, and the charts are kind of cool
 
