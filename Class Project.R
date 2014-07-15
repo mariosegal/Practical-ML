@@ -20,6 +20,21 @@ test <- test_raw
 bad1 <- which(sapply(test,is.character))
 #no need to convert the test
 
-ggplot(train,aes_string(x=names(train)[160],fill=names(train)[160],y=names(train)[10]))+geom_boxplot()
 
+#Do some visual exploration of the data
+library(ggplot2); library(gridExtra)
+vars <- setdiff(which(sapply(train, function(x) sum(!is.na(x))>0)),1:8)
+pdf("Exploratory Charts v1.pdf",width=11,height = 8)
+for (i in 1:length(vars)) {
+    ch <- ggplot(train,aes_string(x=names(train)[160],fill=names(train)[160],y=names(train)[vars[i]]))+theme_bw()+
+      geom_jitter(color="blue",position = position_jitter(width = .1),size=1)+theme(legend.position="none")+ 
+      geom_boxplot(alpha=0.5)
+ print(ch)
+}
+dev.off()
+
+#It does not seem to me I will be able to identify them by sight, but clearly the arm measures are the most 
+#discrinant by sight, and the charts are kind of cool
+
+# I think I need to run some PCA on this 
 
