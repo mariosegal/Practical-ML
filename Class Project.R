@@ -36,5 +36,5 @@ dev.off()
 #It does not seem to me I will be able to identify them by sight, but clearly the arm measures are the most 
 #discrinant by sight, and the charts are kind of cool
 
-# I think I need to run some PCA on this 
+# I think I need to run some PCA on this or other technique to idetify the top variables
 
