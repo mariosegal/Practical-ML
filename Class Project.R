@@ -1,6 +1,8 @@
 ### Practical ML Project
 ### Mario Segal
 
+#Load Libraries
+require(caret)
 
 #1 Read Data
 
@@ -32,6 +34,63 @@ for (i in 1:length(vars)) {
  print(ch)
 }
 dev.off()
+
+#There is a lot of missing data
+round(100*table(sapply(train,function(x) sum(is.na(x))))/19622,2)
+
+# most varibles are either complete or mostly missing
+#I will chose to take the ones with full data
+
+full_vars <- which(sapply(train,function(x) sum(is.na(x)))==0)
+full_vars <- full_vars[-(1:7)]
+
+train_full <- subset(train,,full_vars)
+train_full <- train_full[-c(1:7)]
+groups <- c("_belt","_arm","_dumbbell","_forearm")
+#may be highly correlated, first let's check that
+
+#pairs(train_full[which(grepl(groups[1],names(train_full)))])
+cor(train_full[which(grepl(groups[1],names(train_full)))])
+
+M <- abs(cor(train_full[which(grepl(groups[1],names(train_full)))]))
+diag(M) <- 0
+which(M > 0.8,arr.ind=T)
+#I see a lot of correlation for belt
+
+M <- abs(cor(train_full[which(grepl(groups[2],names(train_full)))]))
+diag(M) <- 0
+which(M > 0.8,arr.ind=T)
+#I see some  correlation for belt
+
+M <- abs(cor(train_full[which(grepl(groups[3],names(train_full)))]))
+diag(M) <- 0
+which(M > 0.8,arr.ind=T)
+#I see some  correlation for dumbbell
+
+
+M <- abs(cor(train_full[which(grepl(groups[4],names(train_full)))]))
+diag(M) <- 0
+which(M > 0.8,arr.ind=T)
+#I see very littel for forearm
+
+
+pc_belt <- preProcess(train_full[which(grepl(groups[1],names(train_full)))],method="pca")
+pc_belt1 <- predict(pc_belt,train_full[which(grepl(groups[1],names(train_full)))])
+names(pc_belt1) <- paste(names(pc_belt1),groups[1],sep="_")
+
+pc_arm <- preProcess(train_full[which(grepl(groups[2],names(train_full)))],method="pca")
+pc_arm1 <- predict(pc_arm,train_full[which(grepl(groups[2],names(train_full)))])
+names(pc_arm1) <- paste(names(pc_arm1),groups[2],sep="_")
+
+pc_dumbbell <- preProcess(train_full[which(grepl(groups[3],names(train_full)))],method="pca")
+pc_dumbbell1 <- predict(pc_dumbbell,train_full[which(grepl(groups[3],names(train_full)))])
+names(pc_dumbbell1) <- paste(names(pc_dumbbell3),groups[3],sep="_")
+
+pc_forearm <- preProcess(train_full[which(grepl(groups[4],names(train_full)))],method="pca")
+pc_forearm1 <- predict(pc_forearm,train_full[which(grepl(groups[4],names(train_full)))])
+names(pc_forearm1) <- paste(names(pc_forearm4),groups[4],sep="_")
+
+
 
 
 #####Analysis ####
