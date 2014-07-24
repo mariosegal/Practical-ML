@@ -2,14 +2,19 @@ install.packages("AppliedPredictiveModeling")
 library(AppliedPredictiveModeling)
 data(segmentationOriginal)
 library(caret)
-
+library(rpart)
+library(rattle)
 
 test <- subset(segmentationOriginal,Case="Test")
 train <- subset(segmentationOriginal,Case="Train")
 
-test1 <- data.frame(TotalIntenCh2=c(23000),FiberWidthCh1=c(10),PerimStatusCh1=c(2))
-print(model$finalModel)
-predict(model,newdata=test1[1,])
+set.seed(125)
+tree1 <- train(Class~.,data=train[-c(1:2)],method="rpart")
+plot(tree1$finalModel);text(tree1$finalModel,pretty=2)
+fancyRpartPlot(tree1$finalModel)
+test1 <- data.frame(TotalIntenCh1=c(23000),FiberWidthCh1=c(10))
+print(tree1$finalModel)
+predict(tree1,newdata=test1)
 
 #PS PS PS not possible
 
@@ -54,4 +59,21 @@ missClass(trainSA$chd,predict(model2a,trainSA,type="response"))
 missClass(testSA$chd,predict(model2a,testSA,type="response"))
 
 
-#answer 0.27 0.31
+#answer train 0.27  test 0.31
+
+
+#5
+library(ElemStatLearn)
+data(vowel.train)
+data(vowel.test) 
+
+vowel.train$y <- as.factor(vowel.train$y )
+vowel.test$y <- as.factor(vowel.test$y )
+
+
+
+set.seed(33833)
+rf <- train(y~.,method="rf",data=vowel.train,importance=T)
+vi1 <- varImp(rf,type=2)
+vi1$var <- row.names(vi1)
+vi1[order(vi1$Overall),]
