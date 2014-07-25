@@ -8,13 +8,13 @@ output: html_document
 ##This is the code for my Parctical Machine Larning Project
 
 ***Load Required Libraries***
-```{r,warning=FALSE}
+```{r load libraries,warning=FALSE,results='hold'}
 require(caret)
 require(rattle)
 ```
 
 ***Load and Clean the Data***
-```{r, echo=FALSE,warning=FALSE}
+```{r load data, echo=FALSE,warning=FALSE}
 columns <- c("character","factor","date","Date","character","factor",rep("numeric",153),"factor")
 train_raw <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"),header=T,strip.white=T,stringsAsFactors=F)
 test_raw <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"),header=T,strip.white=T,stringsAsFactors=F)
@@ -31,7 +31,7 @@ bad1 <- which(sapply(test,is.character))
 ```
 
 ***Explore the Data with Some Nice Charts***
-```{r,warning=FALSE}
+```{r EDA,warning=FALSE,results='hold'}
 library(ggplot2); library(gridExtra)
 vars <- setdiff(which(sapply(train, function(x) sum(!is.na(x))>0)),1:8)
 pdf("Exploratory Charts v1.pdf",width=11,height = 8)
@@ -44,8 +44,8 @@ for (i in 1:length(vars)) {
 dev.off()
 ```
 
-***Explore the Data with Some Nice Charts***
-```{r,warning=FALSE}
+***Drop Sparse Variables***
+```{r more data cleaning,warning=FALSE}
 # most varibles are either complete or mostly missing
 #I will chose to take the ones with full data
 #It turns out the summary variables were very sparse and I am supressing those
@@ -57,33 +57,37 @@ nearZeroVar(train_full)  #good they have no NAs and have proper variance
 ```
 
 ***Check for Highly Correlated Variables, using Approach from Professor Leek***
-```{r,warning=FALSE}
+```{r check correlations,warning=FALSE,results='hold'}
 groups <- c("_belt","_arm","_dumbbell","_forearm")
 
 #Check for highly correlated matrices as per Prof. Leek in the lecture
 M <- abs(cor(train_full[which(grepl(groups[1],names(train_full)))]))
 diag(M) <- 0
+cat(groups[1])
 which(M > 0.8,arr.ind=T)
 #I see a lot of correlation for belt
 
 M <- abs(cor(train_full[which(grepl(groups[2],names(train_full)))]))
 diag(M) <- 0
+cat(groups[2])
 which(M > 0.8,arr.ind=T)
-#I see some  correlation for arm
+#I see some correlation for arm
 
 M <- abs(cor(train_full[which(grepl(groups[3],names(train_full)))]))
 diag(M) <- 0
+cat(groups[3])
 which(M > 0.8,arr.ind=T)
-#I see some  correlation for dumbbell
+#I see some correlation for dumbbell
 
 M <- abs(cor(train_full[which(grepl(groups[4],names(train_full)))]))
 diag(M) <- 0
+cat(groups[4])
 which(M > 0.8,arr.ind=T)
-#I see very little for forearm
+#I see very few for forearm
 ```
 
 ***Reduce Dimensions using PCA by Sensor***
-```{r,warning=FALSE}
+```{r PCA,warning=FALSE,results='hold'}
 #create PC's for each sensor
 pc_belt <- preProcess(train_full[which(grepl(groups[1],names(train_full)))],method="pca")
 pc_belt1 <- predict(pc_belt,train_full[which(grepl(groups[1],names(train_full)))])
@@ -103,7 +107,7 @@ names(pc_forearm1) <- tolower(paste(names(pc_forearm1),groups[4],sep=""))
 ```
 
 ***Visualize First 2 PCs per Group***
-```{r,warning=FALSE}
+```{r Plot PCAs,warning=FALSE,results='hold'}
 print(ggplot(pc_arm1,aes(x=pc1_arm,y=pc2_arm,color=train_full$classe))+geom_point()+ggtitle("Arm"))
 print(ggplot(pc_dumbbell1,aes(x=pc1_dumbbell,y=pc2_dumbbell,color=train_full$classe))+geom_point()+
         coord_cartesian(ylim=c(0,10))+ggtitle("Dumbbell"))
@@ -114,7 +118,7 @@ print(ggplot(pc_forearm1,aes(x=pc1_forearm,y=pc2_forearm,color=train_full$classe
 ```
 
 ***Combine PCs together and also Apply the PCs to test set for Eventual Prediction***
-```{r,warning=FALSE}
+```{r Combine PCA,warning=FALSE,results='hold'}
 #combine all the PCs into an analysis set
 train_pc <- data.frame(cbind(pc_belt1,pc_arm1,pc_dumbbell1,pc_forearm1),classe=train_full$classe)
 
@@ -131,11 +135,48 @@ names(test_pc_belt) <- tolower(paste(names(test_pc_belt),"_belt",sep=""))
 test_pc <- data.frame(cbind(test_pc_arm,test_pc_belt,test_pc_dumbbell,test_pc_forearm))
 ```
 
-***Start Modeling Process***
-```{r,warning=FALSE}
+***Start Modeling Process - Try a CART Tree***
+```{r CART Tree,warning=FALSE,results='hold'}
 #Always a good idea to start with a tree
 model1 <- train(classe~.,data=train_pc,method="rpart") 
 model1$finalModel   
 fancyRpartPlot(model1$finalModel) #this did not work at all as it is not predicting C or E
 confusionMatrix(predict(model1,train_pc),train_pc$classe)
 ```
+
+***Continue Modeling Process - Try a Random Forest of Trees***
+```{r Random Forest,warning=FALSE,results='hold'}
+#Lets try a more complicated approach - Random Forest that is more robust
+model2 <- train(classe~.,data=train_pc,method="rf") 
+print(model2)
+confusionMatrix(model2)
+confusionMatrix(predict(model2,train_pc),train_pc$classe)
+varImp(model2);
+plot(varImp(model2),main="Random Forest Model Variable Importance")
+
+
+#visualize accuracy on a chart I personally like
+results2 <- data.frame(actual=train_pc$classe,predicted=predict(model2,train_pc))
+ggplot(results2,aes(x=actual,y=predicted,color=actual))+geom_jitter(size=0.5,alpha=0.5)+theme_bw()+theme(legend.position="none")
+```
+
+***The Random Forest Worked Great, Hence Create Predictions***
+```{r Predict,warning=FALSE,results='hold'}
+#predict and generate the cases for evaluation
+test_pred1 <- predict(model2,test_pc)
+setwd("Prediction")
+source("pml_write_files.R")  #read the function from Prof. Leek on working directory
+pml_write_files(test_pred1)
+```
+
+***Do Some Visualizations to See How the Top PCs in Importance are Separating***
+```{r Final Visualizations,warning=FALSE,results='hold'}
+#visualize how the top 2 PCs in variable importance separate
+ggplot(pc_dumbbell1,aes(x=pc5_dumbbell,y=pc3_dumbbell,color=train_full$classe))+geom_point()+
+  coord_cartesian(ylim=c(0,10))+coord_cartesian(xlim=c(-4,4),ylim=c(0,5))+theme_bw()+
+  theme(legend.position="bottom")+
+  guides(colour = guide_legend(title.position = "top",title.hjust=0.5))+
+  scale_x_continuous("5th Dumbbell Principal Component")+
+  scale_y_continuous("3rd Dumbbell Principal Component")+scale_color_discrete("Exercise Class")
+```
+
