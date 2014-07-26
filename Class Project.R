@@ -134,7 +134,8 @@ plot(varImp(model2),main="Random Forest Model Variable Importance")
 
 #visualize on a fancy chart I personally like
 results2 <- data.frame(actual=train_pc$classe,predicted=predict(model2,train_pc))
-ggplot(results2,aes(x=actual,y=predicted,color=actual))+geom_jitter(size=0.5,alpha=0.5)+theme_bw()+theme(legend.position="none")
+results2$result <- ifelse(results2$actual==results2$predicted,"Correct","Incorrect")
+ggplot(results2,aes(x=actual,y=predicted,color=actual,shape=result))+geom_jitter(size=0.5,alpha=0.5)+theme_bw()+theme(legend.position="none")
 
 #predict and generate the cases for evaluation
 test_pred1 <- predict(model2,test_pc)

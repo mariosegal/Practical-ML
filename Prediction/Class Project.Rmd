@@ -164,7 +164,7 @@ ggplot(results2,aes(x=actual,y=predicted,color=actual))+geom_jitter(size=0.5,alp
 ```{r Predict,warning=FALSE,results='hold'}
 #predict and generate the cases for evaluation
 test_pred1 <- predict(model2,test_pc)
-setwd("Prediction")
+setwd("/Users/mario/Practical-ML/Prediction")
 source("pml_write_files.R")  #read the function from Prof. Leek on working directory
 pml_write_files(test_pred1)
 ```
