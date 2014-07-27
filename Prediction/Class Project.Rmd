@@ -138,6 +138,7 @@ test_pc <- data.frame(cbind(test_pc_arm,test_pc_belt,test_pc_dumbbell,test_pc_fo
 ***Start Modeling Process - Try a CART Tree***
 ```{r CART Tree,warning=FALSE,results='hold'}
 #Always a good idea to start with a tree
+set.seed(78786)
 model1 <- train(classe~.,data=train_pc,method="rpart") 
 model1$finalModel   
 fancyRpartPlot(model1$finalModel) #this did not work at all as it is not predicting C or E
@@ -147,6 +148,7 @@ confusionMatrix(predict(model1,train_pc),train_pc$classe)
 ***Continue Modeling Process - Try a Random Forest of Trees***
 ```{r Random Forest,warning=FALSE,results='hold'}
 #Lets try a more complicated approach - Random Forest that is more robust
+set.seed(46776)
 model2 <- train(classe~.,data=train_pc,method="rf") 
 print(model2)
 confusionMatrix(model2)
@@ -165,7 +167,7 @@ ggplot(results2,aes(x=actual,y=predicted,color=actual))+geom_jitter(size=0.5,alp
 #predict and generate the cases for evaluation
 test_pred1 <- predict(model2,test_pc)
 setwd("/Users/mario/Practical-ML/Prediction")
-source("pml_write_files.R")  #read the function from Prof. Leek on working directory
+source("/Users/mario/Practical-ML/pml_write_files.R")  #read the function from Prof. Leek on working directory
 pml_write_files(test_pred1)
 ```
 
